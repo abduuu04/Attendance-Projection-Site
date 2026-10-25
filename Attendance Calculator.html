@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Attendance Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF6;
+    --panel: #FFFFFF;
+    --ink: #1C2438;
+    --ink-soft: #5B6478;
+    --line: #E4E1D8;
+    --gold: #B3872F;
+    --good: #3D6B5C;
+    --bad: #A9452F;
+    --radius: 4px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171F;
+      --panel: #1B1F29;
+      --ink: #EDEBE3;
+      --ink-soft: #9AA1B4;
+      --line: #2C3140;
+      --gold: #D3AA55;
+      --good: #6BAF9A;
+      --bad: #D97A63;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14171F;
+    --panel: #1B1F29;
+    --ink: #EDEBE3;
+    --ink-soft: #9AA1B4;
+    --line: #2C3140;
+    --gold: #D3AA55;
+    --good: #6BAF9A;
+    --bad: #D97A63;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 28px 18px 40px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  h1 {
+    font-family: 'Lora', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    margin: 0 0 24px;
+    line-height: 1.45;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .row { display: flex; gap: 12px; }
+  .row .field { flex: 1; }
+  input[type=number] {
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--ink);
+  }
+  input[type=number]:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--gold);
+    margin-top: 4px;
+  }
+  .target-value {
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .headline {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .pct {
+    font-family: 'Lora', serif;
+    font-size: 2.6rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .pct-label { color: var(--ink-soft); font-size: 0.88rem; }
+  .status {
+    font-size: 0.88rem;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .status b { color: inherit; }
+  .status.ok { color: var(--good); }
+  .status.risk { color: var(--bad); }
+
+  h2 {
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td {
+    text-align: left;
+    padding: 7px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    color: var(--ink-soft);
+    font-weight: 500;
+    font-size: 0.78rem;
+  }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .delta-up { color: var(--good); }
+  .delta-down { color: var(--bad); }
+
+  .note {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .note strong { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Attendance Calculator</h1>
+  <p class="sub">See exactly how each hour attended — or missed — moves your percentage, and how many hours stand between you and your target.</p>
+
+  <div class="panel">
+    <div class="row">
+      <div class="field">
+        <label for="attended">Hours attended so far</label>
+        <input type="number" id="attended" value="52" min="0">
+      </div>
+      <div class="field">
+        <label for="total">Hours conducted so far</label>
+        <input type="number" id="total" value="68" min="0">
+      </div>
+    </div>
+    <div class="field">
+      <label for="target">Target attendance — <span class="target-value" id="targetVal">75%</span></label>
+      <input type="range" id="target" min="50" max="90" value="75" step="1">
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="headline">
+      <span class="pct" id="currentPct">—</span>
+      <span class="pct-label">current attendance</span>
+    </div>
+    <div class="status" id="statusLine"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Next few hours, hour by hour</h2>
+    <table>
+      <thead>
+        <tr><th>Hour</th><th class="num">If attended</th><th class="num">If missed</th></tr>
+      </thead>
+      <tbody id="hourTable"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <p class="note" id="summaryNote"></p>
+  </div>
+</div>
+
+<script>
+  const attendedEl = document.getElementById('attended');
+  const totalEl = document.getElementById('total');
+  const targetEl = document.getElementById('target');
+  const targetVal = document.getElementById('targetVal');
+  const currentPct = document.getElementById('currentPct');
+  const statusLine = document.getElementById('statusLine');
+  const hourTable = document.getElementById('hourTable');
+  const summaryNote = document.getElementById('summaryNote');
+
+  function pct(a, t) { return t > 0 ? (a / t) * 100 : 0; }
+
+  function fmt(n) { return n.toFixed(2) + '%'; }
+
+  function render() {
+    let attended = Math.max(0, parseInt(attendedEl.value) || 0);
+    let total = Math.max(attended, parseInt(totalEl.value) || 0);
+    const target = parseInt(targetEl.value);
+    targetVal.textContent = target + '%';
+
+    const cur = pct(attended, total);
+    currentPct.textContent = cur.toFixed(2) + '%';
+
+    // hours needed to reach target by attending consecutively
+    let need = 0;
+    if (cur < target) {
+      // (attended+n)/(total+n) >= target/100
+      const t = target / 100;
+      need = Math.ceil((t * total - attended) / (1 - t));
+      if (need < 0) need = 0;
+    }
+
+    // hours that can be missed while staying at/above target
+    let bunkable = 0;
+    if (cur >= target && target > 0) {
+      const t = target / 100;
+      bunkable = Math.floor(attended / t - total);
+      if (bunkable < 0) bunkable = 0;
+    }
+
+    if (cur >= target) {
+      statusLine.className = 'status ok';
+      statusLine.innerHTML = `You're above target. You can miss <b>${bunkable}</b> more hour${bunkable === 1 ? '' : 's'} in a row and stay at or above ${target}%.`;
+    } else {
+      statusLine.className = 'status risk';
+      statusLine.innerHTML = `You're below target. Attend the next <b>${need}</b> hour${need === 1 ? '' : 's'} in a row to reach ${target}%.`;
+    }
+
+    // hour-by-hour table, 6 rows
+    hourTable.innerHTML = '';
+    let a2 = attended, t2 = total, a3 = attended, t3 = total;
+    for (let i = 1; i <= 6; i++) {
+      a2 += 1; t2 += 1;      // attended path
+      t3 += 1;               // missed path, a3 unchanged
+      const pAttend = pct(a2, t2);
+      const pMiss = pct(a3, t3);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>Hour ${i}</td>
+        <td class="num delta-up">${fmt(pAttend)}</td>
+        <td class="num delta-down">${fmt(pMiss)}</td>`;
+      hourTable.appendChild(tr);
+    }
+
+    const nextUp = pct(attended + 1, total + 1) - cur;
+    const nextDown = pct(attended, total + 1) - cur;
+    summaryNote.innerHTML = `Right now, one more hour attended moves you <strong>${nextUp >= 0 ? '+' : ''}${nextUp.toFixed(2)} pts</strong>; one more hour missed moves you <strong>${nextDown.toFixed(2)} pts</strong>. The more total hours conducted so far, the smaller each single hour's swing.`;
+  }
+
+  [attendedEl, totalEl, targetEl].forEach(el => el.addEventListener('input', render));
+  render();
+</script>
+</body>
+</html>
